@@ -1,0 +1,42 @@
+import { useCallback, useState, type ChangeEventHandler } from 'react';
+import { useLoginMutation } from '../store/auth/api';
+
+export const LoginForm = () => {
+	const [login] = useLoginMutation();
+	const [values, setValues] = useState({ email: '', password: '' });
+	const handleChange = useCallback<ChangeEventHandler<HTMLInputElement>>(
+		(e) => {
+			setValues((prev) => ({
+				...prev,
+				[e.target.name]: e.target.value,
+			}));
+		},
+		[]
+	);
+
+	const handleLogin = useCallback(() => {
+		login(values);
+	}, [login, values]);
+	return (
+		<>
+			<label htmlFor="email">Email:</label>
+			<input
+				name="email"
+				id="email"
+				value={values.email}
+				onChange={handleChange}
+			/>
+
+			<label htmlFor="password">Password:</label>
+			<input
+				name="password"
+				type="password"
+				id="password"
+				value={values.password}
+				onChange={handleChange}
+			/>
+
+			<button onClick={handleLogin}>Login</button>
+		</>
+	);
+};
