@@ -1,8 +1,10 @@
 import { useCallback, useState, type ChangeEventHandler } from 'react';
 import { useLoginMutation } from '../store/auth/api';
+import { useLazyFetchProductQuery } from '../store/products/api';
 
 export const LoginForm = () => {
-	const [login] = useLoginMutation();
+	const [login, { data }] = useLoginMutation();
+	const [fetchProduct] = useLazyFetchProductQuery();
 	const [values, setValues] = useState({ email: '', password: '' });
 	const handleChange = useCallback<ChangeEventHandler<HTMLInputElement>>(
 		(e) => {
@@ -13,6 +15,8 @@ export const LoginForm = () => {
 		},
 		[]
 	);
+
+	console.log(data);
 
 	const handleLogin = useCallback(() => {
 		login(values);
@@ -37,6 +41,14 @@ export const LoginForm = () => {
 			/>
 
 			<button onClick={handleLogin}>Login</button>
+
+			<button
+				onClick={() => {
+					fetchProduct(1);
+				}}
+			>
+				refetch products
+			</button>
 		</>
 	);
 };

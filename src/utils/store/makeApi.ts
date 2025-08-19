@@ -58,7 +58,7 @@ export enum Tag {
 	TODO = 'TODO',
 }
 
-export const myApi = createApi({
+const myApi = createApi({
 	reducerPath: 'api',
 	baseQuery: axiosBaseQuery({
 		baseUrl: 'http://localhost:8080/', // TODO env var
@@ -66,3 +66,5 @@ export const myApi = createApi({
 	endpoints: () => ({}),
 	tagTypes: Object.values(Tag),
 });
+
+export { myApi, instance };

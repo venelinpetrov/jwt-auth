@@ -13,4 +13,4 @@ export const productsApi = myApi.injectEndpoints({
 	}),
 });
 
-export const { useFetchProductQuery } = productsApi;
+export const { useFetchProductQuery, useLazyFetchProductQuery } = productsApi;
