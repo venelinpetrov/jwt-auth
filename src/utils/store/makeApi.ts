@@ -53,7 +53,6 @@ const axiosBaseQuery =
 		}
 	};
 
-// Wrapper that retries with refresh if we get 401
 const baseQueryWithReauth: BaseQueryFn<any, unknown, RequestError> = async (
 	args,
 	api,
@@ -67,17 +66,14 @@ const baseQueryWithReauth: BaseQueryFn<any, unknown, RequestError> = async (
 			'url' in args &&
 			args.url?.includes('auth/refresh')
 		) {
-			return result; // don’t retry refresh itself
+			return result;
 		}
 		try {
-			// Call refresh endpoint via RTK
 			const refreshResult = await api
 				.dispatch(authApi.endpoints.refresh.initiate())
 				.unwrap();
-			// Store new token
 			api.dispatch(setAccessToken(refreshResult.token));
 
-			// Retry original request
 			result = await axiosBaseQuery()(args, api, extraOptions);
 		} catch {
 			api.dispatch(clearAccessToken());
@@ -87,10 +83,15 @@ const baseQueryWithReauth: BaseQueryFn<any, unknown, RequestError> = async (
 	return result;
 };
 
+export enum Tag {
+	User = 'User',
+}
+
 const myApi = createApi({
 	reducerPath: 'api',
 	baseQuery: baseQueryWithReauth,
 	endpoints: () => ({}),
+	tagTypes: Object.values(Tag),
 });
 
 export { instance, myApi };

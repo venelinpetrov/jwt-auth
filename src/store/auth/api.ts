@@ -1,6 +1,6 @@
 import type { LoginResponse, LoginRequest } from '../../types/auth';
 import type { User } from '../../types/user';
-import { myApi } from '../../utils/store/makeApi';
+import { myApi, Tag } from '../../utils/store/makeApi';
 
 export const authApi = myApi.injectEndpoints({
 	endpoints: (build) => ({
@@ -10,6 +10,7 @@ export const authApi = myApi.injectEndpoints({
 				method: 'POST',
 				data,
 			}),
+			invalidatesTags: () => [{ type: Tag.User }],
 		}),
 		refresh: build.mutation<{ accessToken: string }, void>({
 			query: () => ({
@@ -23,6 +24,7 @@ export const authApi = myApi.injectEndpoints({
 				url: 'auth/me',
 				method: 'GET',
 			}),
+			providesTags: () => [{ type: Tag.User }],
 		}),
 	}),
 });
