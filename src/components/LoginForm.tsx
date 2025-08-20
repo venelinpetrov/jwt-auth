@@ -1,8 +1,9 @@
 import { useCallback, useState, type ChangeEventHandler } from 'react';
-import { useLoginMutation } from '../store/auth/api';
+import { useFetchCurrentUserQuery, useLoginMutation } from '../store/auth/api';
 import { useLazyFetchProductQuery } from '../store/products/api';
 
 export const LoginForm = () => {
+	const { data: currentUser } = useFetchCurrentUserQuery();
 	const [login, { data }] = useLoginMutation();
 	const [fetchProduct] = useLazyFetchProductQuery();
 	const [values, setValues] = useState({ email: '', password: '' });
@@ -16,13 +17,15 @@ export const LoginForm = () => {
 		[]
 	);
 
-	console.log(data);
+	console.log({ currentUser });
 
 	const handleLogin = useCallback(() => {
 		login(values);
 	}, [login, values]);
 	return (
 		<>
+			<div>Name: {currentUser?.name}</div>
+
 			<label htmlFor="email">Email:</label>
 			<input
 				name="email"
@@ -30,7 +33,6 @@ export const LoginForm = () => {
 				value={values.email}
 				onChange={handleChange}
 			/>
-
 			<label htmlFor="password">Password:</label>
 			<input
 				name="password"
@@ -39,9 +41,7 @@ export const LoginForm = () => {
 				value={values.password}
 				onChange={handleChange}
 			/>
-
 			<button onClick={handleLogin}>Login</button>
-
 			<button
 				onClick={() => {
 					fetchProduct(1);

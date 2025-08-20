@@ -1,11 +1,14 @@
-import type { BaseQueryFn, QueryReturnValue } from '@reduxjs/toolkit/query';
+import type { BaseQueryFn } from '@reduxjs/toolkit/query';
 import { createApi } from '@reduxjs/toolkit/query/react';
-import axios from 'axios';
-import type { AxiosRequestConfig, AxiosError } from 'axios';
+import axios, { type AxiosRequestConfig, AxiosError } from 'axios';
 import { stringify } from 'qs';
+import { authApi } from '../../store/auth/api';
+import { setAccessToken, clearAccessToken } from '../../store/auth/slice';
 
 const instance = axios.create({
 	paramsSerializer: (params) => stringify(params, { arrayFormat: 'comma' }),
+	baseURL: 'http://localhost:8080/', // TODO env var
+	withCredentials: true,
 });
 
 export interface RequestError {
@@ -13,58 +16,81 @@ export interface RequestError {
 	message: string;
 }
 
-const axiosBaseQuery = ({
-	baseUrl,
-}: {
-	baseUrl: string;
-}): BaseQueryFn<
-	{
-		url: string;
-		method: AxiosRequestConfig['method'];
-		data?: AxiosRequestConfig['data'];
-		params?: AxiosRequestConfig['params'];
-		config?: AxiosRequestConfig;
-	},
-	unknown,
-	RequestError | undefined
-> => {
-	return async ({ url, method, data, params = {}, config = {} }) => {
+const axiosBaseQuery =
+	(): BaseQueryFn<
+		{
+			url: string;
+			method: AxiosRequestConfig['method'];
+			data?: AxiosRequestConfig['data'];
+			params?: AxiosRequestConfig['params'];
+			config?: AxiosRequestConfig;
+		},
+		unknown,
+		RequestError | undefined
+	> =>
+	async ({ url, method, data, params = {}, config = {} }, api) => {
 		try {
-			const result = await instance<unknown>({
-				url: baseUrl + url,
+			const token = api.getState().auth.accessToken;
+			const result = await instance.request<unknown>({
+				url,
 				method,
 				data,
 				params,
+				headers: token
+					? { Authorization: `Bearer ${token}` }
+					: undefined,
 				...config,
 			});
-			return {
-				data: result.data,
-				error: undefined,
-			} as QueryReturnValue<unknown, RequestError | undefined, object>;
+			return { data: result.data };
 		} catch (axiosError) {
 			const err = axiosError as AxiosError<{ error: string }>;
 			return {
-				data: undefined,
 				error: {
-					status: err.response?.status,
-					message: err.response?.data.error,
+					status: err.response?.status ?? 500,
+					message: err.response?.data?.error ?? err.message,
 				},
-			} as QueryReturnValue<unknown, RequestError | undefined, object>;
+			};
 		}
 	};
-};
 
-export enum Tag {
-	TODO = 'TODO',
-}
+// Wrapper that retries with refresh if we get 401
+const baseQueryWithReauth: BaseQueryFn<any, unknown, RequestError> = async (
+	args,
+	api,
+	extraOptions
+) => {
+	let result = await axiosBaseQuery()(args, api, extraOptions);
+
+	if (result.error?.status === 401) {
+		if (
+			typeof args === 'object' &&
+			'url' in args &&
+			args.url?.includes('auth/refresh')
+		) {
+			return result; // don’t retry refresh itself
+		}
+		try {
+			// Call refresh endpoint via RTK
+			const refreshResult = await api
+				.dispatch(authApi.endpoints.refresh.initiate())
+				.unwrap();
+			// Store new token
+			api.dispatch(setAccessToken(refreshResult.token));
+
+			// Retry original request
+			result = await axiosBaseQuery()(args, api, extraOptions);
+		} catch {
+			api.dispatch(clearAccessToken());
+		}
+	}
+
+	return result;
+};
 
 const myApi = createApi({
 	reducerPath: 'api',
-	baseQuery: axiosBaseQuery({
-		baseUrl: 'http://localhost:8080/', // TODO env var
-	}),
+	baseQuery: baseQueryWithReauth,
 	endpoints: () => ({}),
-	tagTypes: Object.values(Tag),
 });
 
-export { myApi, instance };
+export { instance, myApi };

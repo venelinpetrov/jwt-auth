@@ -1,4 +1,5 @@
 import type { LoginResponse, LoginRequest } from '../../types/auth';
+import type { User } from '../../types/user';
 import { myApi } from '../../utils/store/makeApi';
 
 export const authApi = myApi.injectEndpoints({
@@ -10,7 +11,24 @@ export const authApi = myApi.injectEndpoints({
 				data,
 			}),
 		}),
+		refresh: build.mutation<{ accessToken: string }, void>({
+			query: () => ({
+				url: `auth/refresh`,
+				method: 'POST',
+				credentials: 'include',
+			}),
+		}),
+		fetchCurrentUser: build.query<User, void>({
+			query: () => ({
+				url: 'auth/me',
+				method: 'GET',
+			}),
+		}),
 	}),
 });
 
-export const { useLoginMutation } = authApi;
+export const {
+	useLoginMutation,
+	useLazyFetchCurrentUserQuery,
+	useFetchCurrentUserQuery,
+} = authApi;

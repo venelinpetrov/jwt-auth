@@ -1,5 +1,5 @@
 import type { Product } from '../../types/products';
-import { myApi, Tag } from '../../utils/store/makeApi';
+import { myApi } from '../../utils/store/makeApi';
 
 export const productsApi = myApi.injectEndpoints({
 	endpoints: (build) => ({
@@ -8,7 +8,6 @@ export const productsApi = myApi.injectEndpoints({
 				url: `products/${id}`,
 				method: 'GET',
 			}),
-			providesTags: (_res, _err, id) => [{ type: Tag.TODO, id }],
 		}),
 	}),
 });
