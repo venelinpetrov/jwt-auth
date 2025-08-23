@@ -1,8 +1,10 @@
 import { useCallback, useState, type ChangeEventHandler } from 'react';
+import { useNavigate } from 'react-router';
 import { useLoginMutation } from '../store/auth/api';
 import { useLazyFetchProductQuery } from '../store/products/api';
 
 export const LoginForm = () => {
+	const navigate = useNavigate();
 	const [login] = useLoginMutation();
 	const [fetchProduct] = useLazyFetchProductQuery();
 	const [values, setValues] = useState({ email: '', password: '' });
@@ -17,8 +19,12 @@ export const LoginForm = () => {
 	);
 
 	const handleLogin = useCallback(() => {
-		login(values);
-	}, [login, values]);
+		login(values)
+			.unwrap()
+			.then(() => {
+				navigate('/profile');
+			});
+	}, [login, navigate, values]);
 	return (
 		<>
 			<label htmlFor="email">Email:</label>

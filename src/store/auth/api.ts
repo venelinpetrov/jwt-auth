@@ -12,7 +12,7 @@ export const authApi = myApi.injectEndpoints({
 			}),
 			invalidatesTags: () => [{ type: Tag.User }],
 		}),
-		refresh: build.mutation<{ accessToken: string }, void>({
+		refresh: build.mutation<{ token: string }, void>({
 			query: () => ({
 				url: `auth/refresh`,
 				method: 'POST',

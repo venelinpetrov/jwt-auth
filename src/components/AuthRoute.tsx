@@ -1,8 +1,7 @@
-import { useSelector } from 'react-redux';
 import { Navigate, Outlet } from 'react-router';
-import { isAuthenticated } from '../store/auth/selectors';
+import { useFetchCurrentUserQuery } from '../store/auth/api';
 
 export const AuthRoute = () => {
-	const isAuth = useSelector(isAuthenticated);
-	return !isAuth ? <Navigate to="/login" /> : <Outlet />;
+	const { data: user, isLoading } = useFetchCurrentUserQuery();
+	return !user && !isLoading ? <Navigate to="/login" /> : <Outlet />;
 };
